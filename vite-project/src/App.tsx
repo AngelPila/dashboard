@@ -1,14 +1,23 @@
 // import { useState } from 'react'
+import { useState } from 'react';
 import useFetchData from './functions/useFetchData';
 import HeaderUI from './components/HeaderUI'; //Desestructuración de HeaderUI
-import { Grid } from '@mui/material';
+import { Grid, CircularProgress, Alert, Typography } from '@mui/material';
 import AlertUI from './components/AlertUI';
 import './App.css'
 import SelectorUI from './components/SelectorUI';
 import IndicatorUI from './components/IndicatorUI';
+import TableUI from './components/TableUI';
+import ChartUI from './components/ChartUI';
+import { getCityURL } from './data/citiesCoordinates';
+
 function App() {
-  //const [count, setCount] = useState(0)
-  const dataFetcherOutput = useFetchData();
+  const [selectedCity, setSelectedCity] = useState<string>('guayaquil');
+
+  // Construir URL basada en la ciudad seleccionada
+  const cityURL = selectedCity ? getCityURL(selectedCity) : '';
+  
+  const { data: dataFetcherOutput, loading, error } = useFetchData(cityURL);
 
   return (
     <div>
@@ -16,13 +25,37 @@ function App() {
         {/* Encabezado */}
         <Grid size={{ xs: 12, md: 12 }}><HeaderUI /></Grid>
 
+        {/* Estado de carga */}
+        {loading && (
+          <Grid size={{ xs: 12 }} container justifyContent="center" alignItems="center" sx={{ py: 4 }}>
+            <CircularProgress size={60} />
+            <Typography variant="h6" sx={{ ml: 2 }}>Cargando datos meteorológicos...</Typography>
+          </Grid>
+        )}
+
+        {/* Estado de error */}
+        {error && (
+          <Grid size={{ xs: 12 }} container justifyContent="center" alignItems="center">
+            <Alert severity="error" sx={{ width: '100%' }}>
+              <Typography variant="body1">Error al cargar los datos: {error}</Typography>
+            </Alert>
+          </Grid>
+        )}
+
         {/* Alertas */}
-        <Grid size={{ xs: 12, md: 12 }} container justifyContent="right" alignItems="center"><AlertUI description="No se preveen lluvias" /></Grid>
+        {!loading && !error && (
+          <Grid size={{ xs: 12, md: 12 }} container justifyContent="right" alignItems="center"><AlertUI description="No se preveen lluvias" /></Grid>
+        )}
 
         {/* Selector */}
-        <Grid size={{ xs: 12, md: 3 }}><SelectorUI /></Grid>
+        {!loading && !error && (
+          <Grid size={{ xs: 12, md: 3 }}>
+            <SelectorUI selectedCity={selectedCity} onCityChange={setSelectedCity} />
+          </Grid>
+        )}
 
         {/* Indicadores */}
+        {!loading && !error && (
         <Grid container size={{ xs: 12, md: 9 }} >
 
           <Grid size={{ xs: 12, md: 3 }}>
@@ -58,14 +91,26 @@ function App() {
             }          </Grid>
 
         </Grid>
+        )}
+
         {/* Gráfico */}
-        <Grid size={{ xs: 12, md: 6 }} sx={{ display: { xs: "none", md: "block" } }} >Elemento: Gráfico</Grid>
+        {!loading && !error && (
+          <Grid size={{ xs: 12, md: 6 }} sx={{ display: { xs: "none", md: "block" } }} >
+            <ChartUI hourly={dataFetcherOutput?.hourly} hourlyUnits={dataFetcherOutput?.hourly_units} />
+          </Grid>
+        )}
 
         {/* Tabla */}
-        <Grid size={{ xs: 12, md: 6 }} sx={{ display: { xs: "none", md: "block" } }}>Elemento: Tabla</Grid>
+        {!loading && !error && (
+          <Grid size={{ xs: 12, md: 6 }} sx={{ display: { xs: "none", md: "block" } }}>
+            <TableUI hourly={dataFetcherOutput?.hourly} hourlyUnits={dataFetcherOutput?.hourly_units} />
+          </Grid>
+        )}
 
         {/* Información adicional */}
-        <Grid size={{ xs: 12, md: 12 }}>Elemento: Información adicional</Grid>
+        {!loading && !error && (
+          <Grid size={{ xs: 12, md: 12 }}>Elemento: Información adicional</Grid>
+        )}
 
       </Grid>
     </div>
